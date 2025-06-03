@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Calculator</title>
+  <style>
+    /* Reset and base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #f0f4f8;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #333;
+    }
+    .calculator {
+      background: #fff;
+      box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+      border-radius: 15px;
+      width: 320px;
+      max-width: 90vw;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .display {
+      width: 100%;
+      height: 70px;
+      background: #222f3e;
+      color: #fff;
+      font-size: 2.5rem;
+      border-radius: 12px;
+      padding: 10px 20px;
+      text-align: right;
+      overflow-x: auto;
+      user-select: none;
+      margin-bottom: 20px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .buttons {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    button {
+      background: #3867d6;
+      border: none;
+      border-radius: 12px;
+      padding: 18px 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 8px 15px rgba(56,103,214,0.35);
+      cursor: pointer;
+      transition: background 0.3s ease;
+      user-select: none;
+    }
+    button:hover {
+      background: #2c54b2; 
+    }
+    button:active {
+      background: #1f3a7a;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
+    }
+    button.operator {
+      background: #eb3b5a;
+      box-shadow: 0 8px 15px rgba(235,59,90,0.4);
+    }
+    button.operator:hover {
+      background: #c8294e;
+    }
+    button.operator:active {
+      background: #971f3c;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
+    }
+    button.equal {
+      grid-column: span 2;
+      background: #20bf6b;
+      box-shadow: 0 8px 15px rgba(32,191,107,0.4);
+    }
+    button.equal:hover {
+      background: #169c53;
+    }
+    button.equal:active {
+      background: #0e6a35;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.4);
+    }
+    button.zero {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator" role="application" aria-label="Calculator">
+    <div id="display" class="display" aria-live="polite" aria-atomic="true">0</div>
+    <div class="buttons">
+      <button type="button" aria-label="Clear" id="clear">C</button>
+      <button type="button" aria-label="Divide" class="operator" data-operator="/">÷</button>
+      <button type="button" aria-label="Multiply" class="operator" data-operator="*">×</button>
+      <button type="button" aria-label="Backspace" id="backspace">←</button>
+      
+      <button type="button" class="num" data-num="7">7</button>
+      <button type="button" class="num" data-num="8">8</button>
+      <button type="button" class="num" data-num="9">9</button>
+      <button type="button" aria-label="Subtract" class="operator" data-operator="-">−</button>
+      
+      <button type="button" class="num" data-num="4">4</button>
+      <button type="button" class="num" data-num="5">5</button>
+      <button type="button" class="num" data-num="6">6</button>
+      <button type="button" aria-label="Add" class="operator" data-operator="+">+</button>
+      
+      <button type="button" class="num" data-num="1">1</button>
+      <button type="button" class="num" data-num="2">2</button>
+      <button type="button" class="num" data-num="3">3</button>
+      <button type="button" class="equal" id="equals">=</button>
+      
+      <button type="button" class="num zero" data-num="0">0</button>
+      <button type="button" class="num" data-num=".">.</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const displayEl = document.getElementById('display');
+      let currentInput = '0';
+      let lastInput = '';
+      let operator = null;
+      let resetNext = false;
+
+      // Update display function
+      function updateDisplay() {
+        displayEl.textContent = currentInput;
+      }
+
+      // Clear everything
+      function clearAll() {
+        currentInput = '0';
+        lastInput = '';
+        operator = null;
+        resetNext = false;
+        updateDisplay();
+      }
+
+      // Backspace function
+      function backspace() {
+        if (resetNext) {
+          clearAll();
+          return;
+        }
+        if (currentInput.length === 1 || (currentInput.length === 2 && currentInput.startsWith('-'))) {
+          currentInput = '0';
+        } else {
+          currentInput = currentInput.slice(0, -1);
+        }
+        updateDisplay();
+      }
+
+      // Handle number or decimal
+      function appendNumber(num) {
+        if (resetNext) {
+          currentInput = '0';
+          resetNext = false;
+        }
+        if (num === '.' && currentInput.includes('.')) {
+          return; // Prevent multiple decimals
+        }
+        if (currentInput === '0' && num !== '.') {
+          currentInput = num;
+        } else {
+          currentInput += num;
+        }
+        updateDisplay();
+      }
+
+      // Calculate result
+      function calculate(a, b, op) {
+        a = parseFloat(a);
+        b = parseFloat(b);
+        switch (op) {
+          case '+': return a + b;
+          case '-': return a - b;
+          case '*': return a * b;
+          case '/': return b === 0 ? 'Error' : a / b;
+          default: return b;
+        }
+      }
+
+      // Handle operator buttons
+      function handleOperator(op) {
+        if (operator && !resetNext) {
+          // Calculate with existing operator first
+          const result = calculate(lastInput, currentInput, operator);
+          if (result === 'Error') {
+            currentInput = 'Error';
+            operator = null;
+            lastInput = '';
+            resetNext = true;
+            updateDisplay();
+            return;
+          }
+          currentInput = String(result);
+          updateDisplay();
+        }
+        operator = op;
+        lastInput = currentInput;
+        resetNext = true;
+      }
+
+      // Handle equals button
+      function handleEquals() {
+        if (!operator) return;
+        const result = calculate(lastInput, currentInput, operator);
+        if (result === 'Error') {
+          currentInput = 'Error';
+        } else {
+          currentInput = String(result);
+        }
+        operator = null;
+        lastInput = '';
+        resetNext = true;
+        updateDisplay();
+      }
+
+      // Button event listeners
+      document.querySelectorAll('.num').forEach(button => {
+        button.addEventListener('click', () => appendNumber(button.dataset.num));
+      });
+      document.querySelectorAll('.operator').forEach(button => {
+        button.addEventListener('click', () => handleOperator(button.dataset.operator));
+      });
+      document.getElementById('clear').addEventListener('click', clearAll);
+      document.getElementById('backspace').addEventListener('click', backspace);
+      document.getElementById('equals').addEventListener('click', handleEquals);
+
+      // Keyboard input support
+      window.addEventListener('keydown', (e) => {
+        if ((e.key >= '0' && e.key <= '9') || e.key === '.') {
+          e.preventDefault();
+          appendNumber(e.key);
+        } else if (['+', '-', '*', '/'].includes(e.key)) {
+          e.preventDefault();
+          handleOperator(e.key);
+        } else if (e.key === 'Enter' || e.key === '=') {
+          e.preventDefault();
+          handleEquals();
+        } else if (e.key === 'Backspace') {
+          e.preventDefault();
+          backspace();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          clearAll();
+        }
+      });
+
+      updateDisplay();
+    })();
+  </script>
+</body>
+</html>
